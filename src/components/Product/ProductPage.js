@@ -74,29 +74,31 @@ const ProductPage = () => {
             // disable button
             setWishlistButtonState(true);
 
-            if (ProductService.productInWishlist(productDetails.id)) {
-                // Remove to wishlist
-                ProductService.removeToWishList(productDetails.id)
-                    .then(() => {
-                        setWishlistIcon(<FavoriteBorder/>)
-                        setWishlistButtonState(false);
-                    })
-                    .catch((error) => {
-                        console.log(error.response);
-                        setWishlistButtonState(false);
-                    });
-            } else {
-                // Add to wishlist
-                ProductService.addToWishList(productDetails.id)
-                    .then(() => {
-                        setWishlistIcon(<Favorite sx={{color: ThemeButton.palette.primary.main}}/>);
-                        setWishlistButtonState(false);
-                    })
-                    .catch((error) => {
-                        console.log(error.response);
-                        setWishlistButtonState(false);
-                    });
-            }
+            ProductService.productInWishlist(productDetails.id)
+                .then(() => {
+                    // Remove to wishlist
+                    ProductService.removeToWishList(productDetails.id)
+                        .then(() => {
+                            setWishlistIcon(<FavoriteBorder/>)
+                            setWishlistButtonState(false);
+                        })
+                        .catch((error) => {
+                            console.log(error.response);
+                            setWishlistButtonState(false);
+                        });
+                })
+                .catch(() => {
+                    // Add to wishlist
+                    ProductService.addToWishList(productDetails.id)
+                        .then(() => {
+                            setWishlistIcon(<Favorite sx={{color: ThemeButton.palette.primary.main}}/>);
+                            setWishlistButtonState(false);
+                        })
+                        .catch((error) => {
+                            console.log(error.response);
+                            setWishlistButtonState(false);
+                        });
+                });
         } else {
             // User Login Page
             navigate(`/login?ref=${location.pathname}`)
@@ -131,9 +133,15 @@ const ProductPage = () => {
         getProductDetails()
             .then(() => {
                 // wishlist
-                if (ProductService.productInWishlist(productDetails.id)) {
-                    setWishlistIcon(<Favorite sx={{color: ThemeButton.palette.primary.main}}/>);
-                }
+                console.log("Here")
+                ProductService.productInWishlist(productDetails.id)
+                    .then((msg) => {
+                        console.log(msg);
+                        setWishlistIcon(<Favorite sx={{color: ThemeButton.palette.primary.main}}/>);
+                    })
+                    .catch(msg => {
+                        console.log(msg)
+                    })
             })
             .catch(() => {
                 setProductError({message: "Failed to load product details"})

@@ -21,19 +21,26 @@ class ProductService {
     }
 
     // Check if product in wishlist
-    productInWishlist(product_id) {
+    async productInWishlist(product_id) {
         // get wishlist from storage
-        let wishlist = localStorage.getItem('wishlist');
+        let wishlist = new Set();
 
-        // check if wishlist available & parse list
-        if (wishlist) {
-            wishlist = new Set(JSON.parse(wishlist));
-        } else {
-            return false;
-        }
+        await this.getWishList()
+            .then(result => {
+                wishlist = new Set(result.map(r => r._id))
+            })
+            .catch(error => {
+                wishlist = new Set();
+            });
 
         // check item is in wishlist
-        return wishlist.has(product_id)
+        return new Promise((resolve, reject) => {
+            if (wishlist.has(product_id)) {
+                resolve("Product in wishlist");
+            } else {
+                reject("Product not in wishlist");
+            }
+        });
     }
 
     // Add to wishlist
@@ -45,20 +52,6 @@ class ProductService {
             headers: authHeader()
         })
             .then(response => {
-                // get wishlist & add item
-                let wishlist = localStorage.getItem('wishlist');
-
-                // Check if wishlist present
-                if (!wishlist) {
-                    wishlist = new Set();
-                } else {
-                    wishlist = new Set(JSON.parse(wishlist));
-                }
-
-                // add product to wishlist & store in local storage
-                wishlist.add(product_id);
-                localStorage.setItem('wishlist', JSON.stringify([...wishlist]));
-
                 return response.data.message;
             });
     }
@@ -73,16 +66,6 @@ class ProductService {
             }
         })
             .then(response => {
-                // get wishlist & add item
-                let wishlist = localStorage.getItem('wishlist');
-
-                // parse wishlist
-                wishlist = new Set(JSON.parse(wishlist));
-
-                // remove product from wishlist & update in local storage
-                wishlist.delete(product_id);
-                localStorage.setItem('wishlist', JSON.stringify([...wishlist]));
-
                 return response.data.message;
             });
     }
@@ -93,7 +76,7 @@ class ProductService {
         let wishlist = [];
 
         // get list
-        await client.get(`/wish-list/${AuthService.getUserDetails().token}`)
+        await client.get(`/wish-list/display`, {headers: authHeader()})
             .then(response => {
                 wishlist = response.data;
             })
@@ -101,14 +84,18 @@ class ProductService {
                 wishlist = error.response;
             })
 
-        return wishlist;
+        return new Promise(resolve => resolve(wishlist));
     }
 
     // For badge
-    getWishListLength() {
-        const wishlist = this.getWishList();
-        console.log(typeof wishlist);
-        return wishlist.length;
+    async getWishListLength() {
+        let wishlist = [];
+
+        await this.getWishList().then(result => {
+            wishlist = result
+        });
+
+        return new Promise(resolve => resolve(wishlist.length))
     }
 
     // Add to cart
